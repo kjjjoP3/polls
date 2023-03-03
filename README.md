@@ -1,2 +1,3 @@
 # polls
-Du an bo phieu bang react va springboot, phat trien tu tu
+Dự án hoàn thiện, phần backend vẫn đang làm dùng Post truyền Api để biết chức năng có hoạt động hay không.
+FontEnd đang còn hoàn thiện
