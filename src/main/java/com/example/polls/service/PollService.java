@@ -7,6 +7,7 @@ import com.example.polls.payload.PagedResponse;
 import com.example.polls.payload.PollRequest;
 import com.example.polls.payload.PollResponse;
 import com.example.polls.payload.VoteRequest;
+import com.example.polls.repository.ChoiceRepository;
 import com.example.polls.repository.PollRepository;
 import com.example.polls.repository.UserRepository;
 import com.example.polls.repository.VoteRepository;
@@ -22,6 +23,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import javax.transaction.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
@@ -41,6 +44,17 @@ public class PollService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ChoiceRepository choiceRepository;
+
+
+
+    public PollService(PollRepository pollRepository, ChoiceRepository choiceRepository) {
+        this.pollRepository = pollRepository;
+        this.choiceRepository = choiceRepository;
+    }
+
 
     private static final Logger logger = LoggerFactory.getLogger(PollService.class);
 
@@ -271,4 +285,35 @@ public class PollService {
 
         return creatorMap;
     }
+
+
+
+    @Transactional
+    public void deletePollWithChoicesAndVotes(Long pollId) {
+        Poll poll = pollRepository.findById(pollId)
+                .orElseThrow(() -> new ResourceNotFoundException("Poll", "id", pollId));
+
+        choiceRepository.deleteChoicesByPollId(pollId);
+        voteRepository.deleteVotesByPollId(pollId);
+        pollRepository.delete(poll);
+    }
+
+    @Transactional
+    public void deletePollAndVotes(Long pollId) {
+        Poll poll = pollRepository.findById(pollId)
+                .orElseThrow(() -> new ResourceNotFoundException("Poll", "id", pollId));
+
+        // Xóa tất cả các votes liên quan đến các choices trong poll
+        List<Choice> choices = poll.getChoices();
+        for (Choice choice : choices) {
+            voteRepository.deleteByChoiceId(choice.getId());
+        }
+
+        // Xóa tất cả các choices liên quan đến poll
+        choiceRepository.deleteChoicesByPollId(pollId);
+
+        // Xóa poll
+        pollRepository.delete(poll);
+    }
+
 }

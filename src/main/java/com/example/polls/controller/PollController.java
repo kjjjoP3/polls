@@ -1,7 +1,9 @@
 package com.example.polls.controller;
 
+import com.example.polls.exception.ResourceNotFoundException;
 import com.example.polls.model.*;
 import com.example.polls.payload.*;
+import com.example.polls.repository.ChoiceRepository;
 import com.example.polls.repository.PollRepository;
 import com.example.polls.repository.UserRepository;
 import com.example.polls.repository.VoteRepository;
@@ -12,6 +14,7 @@ import com.example.polls.util.AppConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +37,14 @@ public class PollController {
 
     @Autowired
     private PollService pollService;
+
+    @Autowired
+    private ChoiceRepository choiceRepository;
+
+
+    public PollController(PollService pollService) {
+        this.pollService = pollService;
+    }
 
     private static final Logger logger = LoggerFactory.getLogger(PollController.class);
 
@@ -63,11 +74,11 @@ public class PollController {
         return pollService.getPollById(pollId, currentUser);
     }
 
-    @PostMapping("/{pollId}/votes")
-    @PreAuthorize("hasRole('USER')")
-    public PollResponse castVote(@CurrentUser UserPrincipal currentUser,
-                                 @PathVariable Long pollId,
-                                 @Valid @RequestBody VoteRequest voteRequest) {
-        return pollService.castVoteAndGetUpdatedPoll(pollId, voteRequest, currentUser);
+
+    @DeleteMapping("/{pollId}")
+    public ResponseEntity<?> deletePollAndVotes(@PathVariable Long pollId) {
+        pollService.deletePollAndVotes(pollId);
+        return ResponseEntity.ok().build();
     }
+
 }
