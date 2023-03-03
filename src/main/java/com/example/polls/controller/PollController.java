@@ -75,10 +75,18 @@ public class PollController {
     }
 
 
-    @DeleteMapping("/{pollId}")
+    @DeleteMapping("/delete/{pollId}")
     public ResponseEntity<?> deletePollAndVotes(@PathVariable Long pollId) {
         pollService.deletePollAndVotes(pollId);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{pollId}/votes")
+    @PreAuthorize("hasRole('USER')")
+    public PollResponse castVote(@CurrentUser UserPrincipal currentUser,
+                                 @PathVariable Long pollId,
+                                 @Valid @RequestBody VoteRequest voteRequest) {
+        return pollService.castVoteAndGetUpdatedPoll(pollId, voteRequest, currentUser);
     }
 
 }
